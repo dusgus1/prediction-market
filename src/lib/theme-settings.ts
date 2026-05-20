@@ -223,7 +223,7 @@ function resolveLogoSvgOrDefault(value: string | null | undefined, sourceLabel: 
   return sanitizeThemeSiteLogoSvg(normalized, sourceLabel)
 }
 
-function normalizeFeeRecipientWalletAddress(value: string | null | undefined, sourceLabel: string) {
+export function normalizeFeeRecipientWalletAddress(value: string | null | undefined, sourceLabel: string) {
   const normalized = typeof value === 'string' ? value.trim() : ''
   if (!normalized) {
     return { value: ZERO_ADDRESS, error: null as string | null }
@@ -537,6 +537,22 @@ function getGeneralSettingsGroup(allSettings?: SettingsMap): SettingsGroup | und
   return allSettings?.[GENERAL_SETTINGS_GROUP]
 }
 
+export function getFeeRecipientWalletFormValue(allSettings?: SettingsMap): string {
+  const rawValue = getGeneralSettingsGroup(allSettings)?.[GENERAL_FEE_RECIPIENT_WALLET_KEY]?.value
+
+  if (rawValue == null) {
+    return ''
+  }
+
+  const normalized = normalizeFeeRecipientWalletAddress(rawValue, 'Fee recipient wallet')
+
+  if (normalized.error) {
+    return typeof rawValue === 'string' ? rawValue.trim() : ''
+  }
+
+  return isZeroAddress(normalized.value) ? '' : (normalized.value ?? '')
+}
+
 function hasStoredThemeSettings(themeSettings?: SettingsGroup) {
   if (!themeSettings) {
     return false
@@ -667,9 +683,7 @@ export function getThemeSiteSettingsFormState(allSettings?: SettingsMap): ThemeS
       youtubeLink: normalized.data.youtubeLinkValue,
       supportUrl: normalized.data.supportUrlValue,
       customJavascriptCodes: normalized.data.customJavascriptCodes,
-      feeRecipientWallet: isZeroAddress(normalized.data.feeRecipientWalletValue)
-        ? ''
-        : normalized.data.feeRecipientWalletValue,
+      feeRecipientWallet: getFeeRecipientWalletFormValue(allSettings),
       lifiIntegrator,
       lifiApiKey: '',
       lifiApiKeyConfigured,

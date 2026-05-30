@@ -6541,7 +6541,7 @@ export default function AdminCreateEventForm({
                   {selectedCategoryChips.length > 0
                     ? (
                         <div className={cn(`
-                          flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none]
+                          flex scrollbar-none gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none]
                           [&::-webkit-scrollbar]:hidden
                         `)}
                         >

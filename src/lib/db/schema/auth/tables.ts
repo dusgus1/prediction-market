@@ -1,7 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
   boolean,
-  decimal,
   index,
   integer,
   jsonb,
@@ -42,7 +41,6 @@ export const users = pgTable(
     deposit_wallet_tx_hash: text('deposit_wallet_tx_hash'),
     affiliate_code: text(),
     referred_by_user_id: text().references((): any => users.id, { onDelete: 'set null' }),
-    virtual_balance: decimal('virtual_balance', { precision: 18, scale: 2 }).default('10000.00').notNull(),
   },
   table => ({
     usernameLowerUniqueIdx: uniqueIndex('idx_users_username').on(sql`LOWER(${table.username})`),
@@ -116,21 +114,4 @@ export const two_factors = pgTable('two_factors', {
   user_id: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-})
-
-export const virtual_positions = pgTable('virtual_positions', {
-  id: text().primaryKey().default(sql`gen_random_uuid()`),
-  user_id: text()
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  market_id: text().notNull(), // Polymarket market ID
-  market_slug: text().notNull(),
-  market_question: text().notNull(),
-  outcome: text().notNull(), // "Yes" or "No"
-  amount: decimal('amount', { precision: 18, scale: 2 }).notNull(),
-  price_at_buy: decimal('price_at_buy', { precision: 10, scale: 6 }).notNull(),
-  created_at: timestamp().defaultNow().notNull(),
-  updated_at: timestamp()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
-    .notNull(),
 })

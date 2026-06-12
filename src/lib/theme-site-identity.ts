@@ -16,20 +16,17 @@ const THEME_SITE_SOCIAL_LINK_FIELDS = [
 export type ThemeSiteSocialLinkField = typeof THEME_SITE_SOCIAL_LINK_FIELDS[number]
 
 const THEME_SITE_LOGO_MODE_SET = new Set<string>(THEME_SITE_LOGO_MODES)
-const DEFAULT_SITE_NAME_FALLBACK = 'Polymarket'
+const DEFAULT_SITE_NAME_FALLBACK = 'Kuest'
 const DEFAULT_SITE_DESCRIPTION_FALLBACK = 'Decentralized Prediction Markets'
 const DEFAULT_SITE_LOGO_SVG_FALLBACK = `
-<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-        <linearGradient id="polymarketGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#1652F0"/>
-            <stop offset="100%" style="stop-color:#0D3CC7"/>
-        </linearGradient>
-    </defs>
-    <!-- Blue triangle background -->
-    <path d="M10 80 L50 20 L90 80 Z" fill="url(#polymarketGradient)" stroke="none"/>
-    <!-- Letter P -->
-    <text x="50" y="65" font-family="Arial, sans-serif" font-size="45" font-weight="bold" text-anchor="middle" fill="white">P</text>
+<svg viewBox="0 0 518 414" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Transparent" transform="translate(-3204.425121, 0.000000)" fill="#CDFF00">
+            <g id="k-transparent" transform="translate(3204.425121, 0.000000)">
+                <path d="M237.172069,0 L343.777568,0 C354.823263,0 363.777568,8.954305 363.777568,20 L363.777568,175.074942 C363.777568,186.120637 372.731873,195.074942 383.777568,195.074942 L498,195.074942 C509.045695,195.074942 518,204.029247 518,215.074942 L518,394 C518,405.045695 509.045695,414 498,414 L401.842574,414 C355.099082,414 317.205994,376.106912 317.205994,329.36342 L317.205994,264.72684 C317.205994,253.681145 308.251689,244.72684 297.205994,244.72684 L284.301306,244.72684 C278.232047,244.72684 272.491137,247.482832 268.695367,252.218656 L145.032079,406.508184 C141.236309,411.244008 135.495399,414 129.42614,414 L17,414 C7.611159,414 0,406.388841 0,397 L0,289.368948 C0,285.034088 1.4823,280.829557 4.2009,277.453134 L221.594069,7.457038 C225.390585,2.741873 231.118449,0 237.172069,0 Z" id="Path"></path>
+            </g>
+        </g>
+    </g>
 </svg>
 `
 

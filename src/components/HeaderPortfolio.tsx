@@ -21,7 +21,7 @@ export default function HeaderPortfolio() {
     : '0.00'
 
   return (
-    <div className="grid grid-cols-2 gap-x-1">
+    <div className="grid grid-cols-3 gap-x-1">
       <Button
         variant="ghost"
         size="header"
@@ -66,6 +66,20 @@ export default function HeaderPortfolio() {
                       {formattedCashValue}
                     </>
                   )}
+          </div>
+        </AppLink>
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="header"
+        className="flex h-11 flex-col items-center justify-center gap-0.5 rounded-[6px] px-2.5 py-1"
+        asChild
+      >
+        <AppLink intentPrefetch href="/markets">
+          <div className="translate-y-px text-xs/tight font-medium text-muted-foreground">Markets</div>
+          <div className="-translate-y-px text-base/tight font-semibold text-primary">
+            Live
           </div>
         </AppLink>
       </Button>

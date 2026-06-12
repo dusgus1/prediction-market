@@ -1,62 +1,37 @@
 import { NextResponse } from 'next/server'
-import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 
+// Simple proxy to Polymarket API without database dependencies
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const offset = searchParams.get('offset') || '0'
-  const limitParam = searchParams.get('limit')
-  const limit = limitParam ? Math.min(parseInt(limitParam), 100) : 20 // Max 100 markets
-  const search = searchParams.get('search') || ''
-
   try {
-    // Proxy request to our Polymarket API endpoint
-    const baseUrl = new URL(request.url).origin
-    const polymarketApiUrl = `${baseUrl}/api/polymarket-markets?limit=${limit}&offset=${offset}`
+    const { searchParams } = new URL(request.url)
+    const limit = searchParams.get('limit') || '20'
 
-    const response = await fetch(polymarketApiUrl)
+    // Direct fetch from Polymarket
+    const response = await fetch(
+      `https://gamma-api.polymarket.com/markets?limit=${limit}&active=true&order=volume24hr%3ADESC`,
+      {
+        headers: {
+          'Accept': 'application/json',
+        },
+        next: { revalidate: 300 },
+      }
+    )
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch from Polymarket API: ${response.status}`)
-    }
-
-    let markets = await response.json()
-
-    // Apply search filter if provided
-    if (search.trim()) {
-      const searchTerm = search.toLowerCase()
-      markets = markets.filter((market: any) =>
-        market.question.toLowerCase().includes(searchTerm) ||
-        market.description.toLowerCase().includes(searchTerm)
+      return NextResponse.json(
+        { error: 'Failed to fetch markets' },
+        { status: 500 }
       )
     }
 
-    // Transform to match expected event format
-    const events = markets.map((market: any) => ({
-      id: market.id,
-      slug: market.slug,
-      title: market.question,
-      description: market.description,
-      icon_url: market.icon_url,
-      image_url: market.image_url,
-      status: market.active ? 'active' : 'closed',
-      end_date: market.end_date,
-      start_date: market.start_date,
-      created_at: market.created_at,
-      updated_at: market.updated_at,
-      // Additional data for UI
-      volume: market.volume,
-      volume24hr: market.volume24hr,
-      liquidity: market.liquidity,
-      probability_yes: market.probability_yes,
-      probability_no: market.probability_no,
-      prices: market.prices,
-      outcomes: market.outcomes,
-    }))
-
-    return NextResponse.json(events)
+    const data = await response.json()
+    return NextResponse.json(data)
 
   } catch (error: any) {
     console.error('Events API Error:', error)
-    return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Server error' },
+      { status: 500 }
+    )
   }
 }

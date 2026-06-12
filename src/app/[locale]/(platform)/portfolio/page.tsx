@@ -3,7 +3,7 @@ import { setRequestLocale } from 'next-intl/server'
 import { connection } from 'next/server'
 import PortfolioMarketsWonCard from '@/app/[locale]/(platform)/portfolio/_components/PortfolioMarketsWonCard'
 import PortfolioTabs from '@/app/[locale]/(platform)/portfolio/_components/PortfolioTabs'
-import PortfolioWalletActions from '@/app/[locale]/(platform)/portfolio/_components/PortfolioWalletActions'
+import VirtualBalanceActions from '@/app/[locale]/(platform)/portfolio/_components/VirtualBalanceActions'
 import PublicProfileHeroCards from '@/app/[locale]/(platform)/profile/_components/PublicProfileHeroCards'
 import { UserRepository } from '@/lib/db/queries/user'
 import { fetchPortfolioSnapshot } from '@/lib/portfolio'
@@ -39,7 +39,7 @@ export default async function PortfolioPage({ params }: PageProps<'/[locale]/por
           portfolioAddress: publicAddress ?? undefined,
         }}
         snapshot={snapshot}
-        actions={<PortfolioWalletActions />}
+        actions={<VirtualBalanceActions />}
         variant="portfolio"
         fallbackChartEndDate={fallbackChartEndDate}
       />

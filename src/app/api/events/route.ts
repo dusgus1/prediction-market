@@ -1,122 +1,62 @@
-import type { SportsVertical } from '@/lib/sports-vertical'
 import { NextResponse } from 'next/server'
-import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@/i18n/locales'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
-import { EventRepository } from '@/lib/db/queries/event'
-import { UserRepository } from '@/lib/db/queries/user'
-import { isEventListSortBy, isEventListStatusFilter } from '@/lib/event-list-filters'
-import { listHomeEventsPage } from '@/lib/home-events-page'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const tag = searchParams.get('tag') || 'trending'
-  const mainTag = searchParams.get('mainTag') || ''
+  const offset = searchParams.get('offset') || '0'
+  const limitParam = searchParams.get('limit')
+  const limit = limitParam ? Math.min(parseInt(limitParam), 100) : 20 // Max 100 markets
   const search = searchParams.get('search') || ''
-  const bookmarked = searchParams.get('bookmarked') === 'true'
-  const includeBookmarkState = searchParams.get('includeBookmarkState') !== 'false'
-  const frequency = searchParams.get('frequency') || 'all'
-  const hideSports = searchParams.get('hideSports') === 'true'
-  const hideCrypto = searchParams.get('hideCrypto') === 'true'
-  const hideEarnings = searchParams.get('hideEarnings') === 'true'
-  const homeFeed = searchParams.get('homeFeed') === 'true'
-  const statusParam = searchParams.get('status')
-  const status = statusParam ?? 'active'
-  const sportsSportSlug = searchParams.get('sportsSportSlug') || ''
-  const sportsVerticalParam = searchParams.get('sportsVertical') || ''
-  const sportsVertical: SportsVertical | '' = sportsVerticalParam === 'sports' || sportsVerticalParam === 'esports'
-    ? sportsVerticalParam
-    : ''
-  const sportsSectionParam = searchParams.get('sportsSection') || ''
-  const sportsSection = sportsSectionParam.trim().toLowerCase()
-  const sortParam = searchParams.get('sort')
-  const sortBy = isEventListSortBy(sortParam) ? sortParam : undefined
-  const currentTimestampParam = Number.parseInt(searchParams.get('currentTimestamp') || '', 10)
-  const currentTimestamp = Number.isNaN(currentTimestampParam) ? null : currentTimestampParam
-  const localeParam = searchParams.get('locale') ?? DEFAULT_LOCALE
-  const locale = SUPPORTED_LOCALES.includes(localeParam as typeof SUPPORTED_LOCALES[number])
-    ? localeParam as typeof SUPPORTED_LOCALES[number]
-    : DEFAULT_LOCALE
-  const offset = Number.parseInt(searchParams.get('offset') || '0', 10)
-  const clampedOffset = Number.isNaN(offset) ? 0 : Math.max(0, offset)
-  const limitParam = Number.parseInt(searchParams.get('limit') || '', 10)
-  const limit = Number.isNaN(limitParam) ? undefined : Math.max(1, limitParam)
-
-  if (!isEventListStatusFilter(status)) {
-    return NextResponse.json({ error: 'Invalid status filter.' }, { status: 400 })
-  }
-
-  if (frequency !== 'all' && frequency !== 'daily' && frequency !== 'weekly' && frequency !== 'monthly') {
-    return NextResponse.json({ error: 'Invalid frequency filter.' }, { status: 400 })
-  }
-
-  if (sportsSection && sportsSection !== 'games' && sportsSection !== 'props') {
-    return NextResponse.json({ error: 'Invalid sports section filter.' }, { status: 400 })
-  }
-
-  const shouldResolveCurrentUser = bookmarked || includeBookmarkState
-  const user = shouldResolveCurrentUser
-    ? await UserRepository.getCurrentUser({ minimal: true })
-    : null
-  const userId = user?.id
 
   try {
-    if (bookmarked && !userId) {
-      return NextResponse.json([])
+    // Proxy request to our Polymarket API endpoint
+    const baseUrl = new URL(request.url).origin
+    const polymarketApiUrl = `${baseUrl}/api/polymarket-markets?limit=${limit}&offset=${offset}`
+
+    const response = await fetch(polymarketApiUrl)
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch from Polymarket API: ${response.status}`)
     }
 
-    if (homeFeed) {
-      const { data: events, error } = await listHomeEventsPage({
-        tag,
-        mainTag,
-        search,
-        sortBy,
-        userId: userId ?? '',
-        bookmarked,
-        frequency: (frequency === 'daily' || frequency === 'weekly' || frequency === 'monthly') ? frequency : 'all',
-        status,
-        offset: clampedOffset,
-        currentTimestamp,
-        locale,
-        hideSports,
-        hideCrypto,
-        hideEarnings,
-      })
+    let markets = await response.json()
 
-      if (error) {
-        return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
-      }
-
-      return NextResponse.json(events)
+    // Apply search filter if provided
+    if (search.trim()) {
+      const searchTerm = search.toLowerCase()
+      markets = markets.filter((market: any) =>
+        market.question.toLowerCase().includes(searchTerm) ||
+        market.description.toLowerCase().includes(searchTerm)
+      )
     }
 
-    const { data: events, error } = await EventRepository.listEvents({
-      tag,
-      mainTag,
-      search,
-      sortBy,
-      userId,
-      bookmarked,
-      frequency,
-      status,
-      offset: clampedOffset,
-      limit,
-      locale,
-      hideSports,
-      hideCrypto,
-      hideEarnings,
-      sportsVertical,
-      sportsSportSlug,
-      sportsSection: (sportsSection === 'games' || sportsSection === 'props') ? sportsSection : '',
-    })
-
-    if (error) {
-      return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
-    }
+    // Transform to match expected event format
+    const events = markets.map((market: any) => ({
+      id: market.id,
+      slug: market.slug,
+      title: market.question,
+      description: market.description,
+      icon_url: market.icon_url,
+      image_url: market.image_url,
+      status: market.active ? 'active' : 'closed',
+      end_date: market.end_date,
+      start_date: market.start_date,
+      created_at: market.created_at,
+      updated_at: market.updated_at,
+      // Additional data for UI
+      volume: market.volume,
+      volume24hr: market.volume24hr,
+      liquidity: market.liquidity,
+      probability_yes: market.probability_yes,
+      probability_no: market.probability_no,
+      prices: market.prices,
+      outcomes: market.outcomes,
+    }))
 
     return NextResponse.json(events)
-  }
-  catch (error) {
-    console.error('API Error:', error)
+
+  } catch (error: any) {
+    console.error('Events API Error:', error)
     return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
   }
 }
